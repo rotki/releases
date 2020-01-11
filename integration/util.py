@@ -27,12 +27,17 @@ class get_doctree_(Spec):
         ok_(isinstance(doctree, document))
         ok_(isinstance(app, Sphinx))
         # Sanity checks of internal nodes, which should be Releases objects
+        print(doctree)
         entries = doctree[0][2]
-        ok_(isinstance(entries[0][0][0], Release))
+        for x in (entries, entries[0], entries[0][0]):
+            print("{!r} ({})".format(x, type(x)))
+        obj = entries[0][0][0]
+        ok_(isinstance(obj, Release), "{!r} was not a Release!".format(obj))
         bug = entries[1][0][0]
         ok_(isinstance(bug, Issue))
         eq_(bug.type, 'bug')
         eq_(bug.number, '1')
+        assert False
 
 
 class parse_changelog_(Spec):

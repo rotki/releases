@@ -149,11 +149,16 @@ def get_doctree(path, **kwargs):
     except TypeError:
         # Assume newer Sphinx w/o an app= kwarg
         del kwargs['app']
+        # On Sphinx >=1.8, must do this here
+        env.temp_data['docname'] = docname
         env.update(**kwargs)
     # Code taken from sphinx.environment.read_doc; easier to manually call
     # it with a working Environment object, instead of doing more random crap
     # to trick the higher up build system into thinking our single changelog
     # document was "updated".
+    # NOTE: on Sphinx <1.8, have to do the docname override/insertion here.
+    # TODO: strongly consider just making this releases 1.7 requiring sphinx
+    # 1.8+? then we can nix a lot of this crap
     env.temp_data['docname'] = docname
     env.app = app
     # NOTE: SphinxStandaloneReader API changed in 1.4 :(
@@ -261,7 +266,7 @@ def make_app(**kwargs):
         # NOTE: used to just do 'sphinx' but that stopped working, even on
         # sphinx 1.6.x. Weird. Unsure why hierarchy not functioning.
         for name in ('sphinx', 'sphinx.sphinx.application'):
-            logging.getLogger(name).setLevel(logging.ERROR)
+            logging.getLogger(name).setLevel(logging.DEBUG)
         # App API seems to work on all versions so far.
         app = Sphinx(
             srcdir=srcdir,
