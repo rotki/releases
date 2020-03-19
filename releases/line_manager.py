@@ -44,10 +44,7 @@ class LineManager(dict):
 
         Specifically, checks config & whether any non-0.x releases exist.
         """
-        return (
-            self.config.releases_unstable_prehistory
-            and not self.has_stable_releases
-        )
+        return self.config.releases_unstable_prehistory
 
     @property
     def stable_families(self):

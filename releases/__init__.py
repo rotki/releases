@@ -3,13 +3,14 @@ import re
 import sys
 from functools import partial
 
-from docutils import nodes, utils
-from docutils.parsers.rst import roles
 import six
 
-from .models import Issue, ISSUE_TYPES, Release, Version, Spec
-from .line_manager import LineManager
+from docutils import nodes, utils
+from docutils.parsers.rst import roles
+
 from ._version import __version__
+from .line_manager import LineManager
+from .models import ISSUE_TYPES, Issue, Release, Spec, Version
 
 
 def _log(txt, config):
@@ -303,20 +304,18 @@ def construct_entry_with_release(focus, issues, manager, log, releases, rest):
             # answering questions like "what should I give you for a release"
             # or whatever
             log("in unstable prehistory, dumping 'unreleased'")
+            if focus.minor not in manager[focus.family]:
+                manager[focus.family][focus.minor] = []
+            if "unreleased" not in manager[focus.family]:
+                manager[focus.family]["unreleased"] = []
+
             releases.append(
                 {
                     "obj": focus,
-                    # NOTE: explicitly dumping 0, not focus.family, since this
-                    # might be the last pre-historical release and thus not 0.x
-                    "entries": manager[0]["unreleased"][:],
+                    "entries": manager[focus.family]["unreleased"][:],
                 }
             )
-            manager[0]["unreleased"] = []
-            # If this isn't a 0.x release, it signals end of prehistory, make a
-            # new release bucket (as is also done below in regular behavior).
-            # Also acts like a sentinel that prehistory is over.
-            if focus.family != 0:
-                manager[focus.family][focus.minor] = []
+            manager[focus.family]["unreleased"] = []
         # Regular behavior from here
         else:
             # New release line/branch detected. Create it & dump unreleased
@@ -405,7 +404,14 @@ lists.
     # Release's methods should probably go that way
     if manager.unstable_prehistory:
         log("Unstable prehistory -> adding to 0.x unreleased bucket")
-        manager[0]["unreleased"].append(focus)
+        max_key = max(manager.keys())
+        if max_key not in manager:
+            manager[max_key] = {}
+
+        if "unreleased" not in manager[max_key]:
+            manager[max_key]["unreleased"] = []
+
+        manager[max_key]["unreleased"].append(focus)
     else:
         log("Adding to release line manager")
         focus.add_to_manager(manager)
@@ -527,11 +533,12 @@ def construct_releases(entries, app):
             construct_entry_without_release(focus, issues, manager, log, rest)
 
     if manager.unstable_prehistory:
+        max_key = max(manager.keys())
         releases.append(
             generate_unreleased_entry(
                 header="Next release",
                 line="unreleased",
-                issues=manager[0]["unreleased"],
+                issues=manager[max_key]["unreleased"],
                 manager=manager,
                 app=app,
             )
