@@ -9,13 +9,13 @@ with open("releases/_version.py") as fp:
 version = _locals["__version__"]
 
 setup(
-    name="releases",
+    name="rotki_releases",
     version=version,
-    description="A Sphinx extension for changelog manipulation",
+    description="A Sphinx extension for changelog manipulation -- Rotki fork",
     long_description=open("README.rst").read(),
     author="Jeff Forcier",
     author_email="jeff@bitprophet.org",
-    url="https://github.com/bitprophet/releases",
+    url="https://github.com/rotki/releases",
     packages=["releases"],
     install_requires=["semantic_version<2.7", "sphinx>=1.8"],
     classifiers=[
