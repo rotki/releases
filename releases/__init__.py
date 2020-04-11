@@ -602,10 +602,19 @@ class BulletListVisitor(nodes.NodeVisitor):
         self.app = app
 
     def visit_bullet_list(self, node):
-        # The first found bullet list (which should be the first one at the top
-        # level of the document) is the changelog.
         if not self.found_changelog:
-            self.found_changelog = True
+            if self.app.builder.__class__.__name__ != 'ReadtheDocsSingleFileHTMLBuilderLocalMedia':
+                # The first found bullet list (which should be the first one at the top
+                # level of the document) is the changelog.
+                self.found_changelog = True
+            else:
+                # For single html page get the first bullet list matching the changelog format
+                keywords = ('<Issue backported=',)
+                if any(x in str(node) for x in keywords):
+                    self.found_changelog = True
+                else:
+                    return
+
             # Walk + parse into release mapping
             releases, _ = construct_releases(node.children, self.app)
             # Construct new set of nodes to replace the old, and we're done
@@ -618,7 +627,12 @@ class BulletListVisitor(nodes.NodeVisitor):
 def generate_changelog(app, doctree, docname):
     # Don't scan/mutate documents that don't match the configured document name
     # (which by default is ['changelog.rst', ]).
-    if docname not in app.config.releases_document_name:
+    # But if we are at a single page build - do scan
+    dont_scan = (
+        app.builder.__class__.__name__ != 'ReadtheDocsSingleFileHTMLBuilderLocalMedia' and
+        docname not in app.config.releases_document_name
+    )
+    if dont_scan:
         return
 
     # Find the first bullet-list node & replace it with our organized/parsed
